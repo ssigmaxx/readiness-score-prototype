@@ -8,15 +8,18 @@
 </head>
 <body>
 <header class="app-header">
-  <div class="app-header-title">
-    <h1>Readiness-Tool</h1>
-    <p class="subtitle">Prototyp — läuft vollständig lokal im Browser, keine Daten verlassen dieses Gerät</p>
-  </div>
-  <div class="app-header-actions">
-    <button id="export-btn" class="btn btn-secondary">Export (JSON)</button>
-    <button id="import-btn" class="btn btn-secondary">Import (JSON)</button>
-    <input type="file" id="import-input" accept="application/json" hidden />
-    <button id="reset-btn" class="btn btn-danger">Zurücksetzen</button>
+  <div class="app-header-inner">
+    <div class="app-header-title">
+      <p class="masthead-kicker">Regulatorisches Self-Assessment</p>
+      <h1>Readiness-Tool</h1>
+      <p class="subtitle">Prüfen Sie Ihre Vorbereitung auf EUDR, CSDDD, PPWR, ESPR und Ihre LCA-Reife — vollständig lokal, ohne Datenübertragung.</p>
+    </div>
+    <div class="app-header-actions">
+      <button id="export-btn" class="btn btn-secondary">Export (JSON)</button>
+      <button id="import-btn" class="btn btn-secondary">Import (JSON)</button>
+      <input type="file" id="import-input" accept="application/json" hidden />
+      <button id="reset-btn" class="btn btn-danger">Zurücksetzen</button>
+    </div>
   </div>
 </header>
 
@@ -25,7 +28,7 @@
 <main id="step-content" class="step-content"></main>
 
 <footer class="app-footer">
-  <p>Prototyp zur Diskussion — Datenmodell und Bewertungslogik entsprechen dem Excel/VBA-Original (Fragenkatalog, Relevanzmatrix, 0–4 Bewertungsskala); die Umsetzung ist neu.</p>
+  <p>Datenmodell und Bewertungslogik (Fragenkatalog, Relevanzmatrix, 0–4 Bewertungsskala) folgen der bestehenden Methodik; diese Umsetzung ersetzt lediglich das Excel/VBA-Original durch eine browserbasierte Anwendung ohne Datenübertragung.</p>
 </footer>
 
 <script src="js/data.js"></script>

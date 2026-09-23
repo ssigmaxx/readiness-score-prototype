@@ -2,10 +2,10 @@
 
 const STEPS = ["profile", "regulatory", "lca", "dashboard"];
 const STEP_LABELS = {
-  profile: "1. Unternehmensprofil",
-  regulatory: "2. Regulatorische Bewertung",
-  lca: "3. LCA Readiness",
-  dashboard: "4. Dashboard",
+  profile: "Unternehmensprofil",
+  regulatory: "Regulatorische Bewertung",
+  lca: "LCA Readiness",
+  dashboard: "Dashboard",
 };
 
 let currentStep = "profile";
@@ -24,20 +24,6 @@ function el(tag, attrs, children) {
   return node;
 }
 
-function scaleSelect(name, currentValue, onChange) {
-  const select = el("select", {
-    class: "scale-select",
-    onchange: (e) => onChange(e.target.value === "" ? null : Number(e.target.value)),
-  });
-  select.appendChild(el("option", { value: "" }, ["— noch nicht bewertet —"]));
-  SCALE.forEach((s) => {
-    const opt = el("option", { value: String(s.score) }, [`${s.score} — ${s.label}`]);
-    if (currentValue === s.score) opt.selected = true;
-    select.appendChild(opt);
-  });
-  return select;
-}
-
 function groupBy(items, keyFn) {
   const map = new Map();
   items.forEach((item) => {
@@ -48,11 +34,51 @@ function groupBy(items, keyFn) {
   return map;
 }
 
+// Segmented 0–4 control. Short labels stay legible in a compact row; the full
+// wording lives in the scale legend at the top of the step and in the title
+// attribute, rather than repeated 84 times down the page.
+function scalePicker(questionId, currentValue, onChange) {
+  const wrap = el("div", { class: "scale-picker", role: "radiogroup", "aria-label": "Bewertung" });
+  SCALE.forEach((s) => {
+    const inputId = `scale-${questionId}-${s.score}`;
+    const input = el("input", {
+      type: "radio",
+      name: `scale-${questionId}`,
+      id: inputId,
+      title: s.label,
+      onchange: () => onChange(s.score),
+    });
+    input.checked = currentValue === s.score;
+    const label = el("label", { for: inputId, title: s.label }, [String(s.score)]);
+    wrap.appendChild(el("div", { class: "scale-picker-option" }, [input, label]));
+  });
+  return wrap;
+}
+
+function scaleLegend() {
+  const wrap = el("div", { class: "scale-legend" }, [
+    el("span", {}, ["Bewertungsskala:"]),
+  ]);
+  SCALE.forEach((s) => {
+    wrap.appendChild(el("span", { class: "scale-legend-item" }, [el("b", {}, [String(s.score)]), ` ${s.label}`]));
+  });
+  return wrap;
+}
+
 // ---------- Step: Profile ----------
 
 function renderProfileStep(container) {
   const p = appState.profile;
   container.innerHTML = "";
+
+  container.appendChild(
+    el("div", { class: "intro-note" }, [
+      el("span", { class: "intro-note-icon" }, ["i"]),
+      el("span", {}, [
+        "Alle Angaben verbleiben ausschließlich in diesem Browser (lokaler Zwischenspeicher). Es findet keine Übertragung an einen Server statt. Nutzen Sie „Export (JSON)“, um Ihren Stand zu sichern oder auf einem anderen Gerät fortzusetzen.",
+      ]),
+    ])
+  );
 
   container.appendChild(
     el("div", { class: "field-row" }, [
@@ -238,6 +264,8 @@ function renderRegulatoryStep(container) {
     return;
   }
 
+  container.appendChild(scaleLegend());
+
   const byRegulation = groupBy(relevant, (q) => q.regulation);
   byRegulation.forEach((questions, regulation) => {
     container.appendChild(el("h3", { class: "regulation-title" }, [`${regulation} — ${REGULATIONS[regulation].fullName}`]));
@@ -252,16 +280,14 @@ function renderRegulatoryStep(container) {
 }
 
 function questionRow(q, answerMap) {
-  const row = el("div", { class: "question-row" }, [
+  return el("div", { class: "question-row" }, [
     el("div", { class: "question-id" }, [q.id]),
     el("div", { class: "question-text" }, [q.text]),
+    scalePicker(q.id, answerMap[q.id], (val) => {
+      answerMap[q.id] = val;
+      saveState();
+    }),
   ]);
-  row.appendChild(scaleSelect(q.id, answerMap[q.id], (val) => {
-    if (val === null) delete answerMap[q.id];
-    else answerMap[q.id] = val;
-    saveState();
-  }));
-  return row;
 }
 
 // ---------- Step: LCA ----------
@@ -273,6 +299,7 @@ function renderLcaStep(container) {
       "Diese Bewertung ist unabhängig vom Unternehmensprofil — sie deckt die Reife Ihrer Ökobilanzierung (LCA) durchgehend ab.",
     ])
   );
+  container.appendChild(scaleLegend());
   const byField = groupBy(LCA_QUESTIONS, (q) => q.field);
   byField.forEach((fieldQuestions, field) => {
     container.appendChild(el("h4", { class: "field-title" }, [field]));
@@ -292,6 +319,19 @@ function scoreStats(questions, answerMap) {
   return { pct, answeredCount: answered.length, total };
 }
 
+function statTile(label, stats, opts) {
+  opts = opts || {};
+  const status = statusForPct(stats.pct);
+  const tile = el("div", { class: "stat-tile" }, [
+    el("div", { class: "stat-tile-label" }, [label]),
+    el("div", { class: "stat-tile-value" }, [stats.pct === null ? "—" : `${Math.round(stats.pct)}%`]),
+  ]);
+  const sub = el("div", { class: "stat-tile-sub" });
+  sub.innerHTML = `${statusChipHTML(status)}<br>${stats.answeredCount} von ${stats.total} Fragen beantwortet`;
+  tile.appendChild(sub);
+  return tile;
+}
+
 function renderDashboardStep(container) {
   container.innerHTML = "";
   deriveActiveRoleKeys(appState.profile);
@@ -300,64 +340,57 @@ function renderDashboardStep(container) {
   const overallQuestions = relevant.concat(LCA_QUESTIONS);
   const overallAnswers = Object.assign({}, appState.answers, appState.lcaAnswers);
   const overall = scoreStats(overallQuestions, overallAnswers);
+  const regulatoryStats = scoreStats(relevant, appState.answers);
+  const lcaStats = scoreStats(LCA_QUESTIONS, appState.lcaAnswers);
 
-  const summaryRow = el("div", { class: "dashboard-summary" });
-  const donutWrap = el("div", { class: "donut-wrap" });
-  renderDonut(donutWrap, overall.pct || 0, overall.pct === null ? "—" : `${Math.round(overall.pct)}%`);
-  summaryRow.appendChild(donutWrap);
-  summaryRow.appendChild(
-    el("div", { class: "summary-text" }, [
-      el("h3", {}, ["Gesamt-Readiness"]),
-      el("p", {}, [
-        `${overall.answeredCount} von ${overall.total} relevanten Fragen beantwortet (Regularien + LCA).`,
-      ]),
-    ])
-  );
-  container.appendChild(summaryRow);
+  const reportMeta = el("div", { class: "report-meta" }, [
+    `${appState.companyName ? appState.companyName + " — " : ""}Readiness-Auswertung vom ${new Date().toLocaleDateString("de-DE")}`,
+  ]);
+  container.appendChild(reportMeta);
+
+  const grid = el("div", { class: "dashboard-stat-grid" }, [
+    statTile("Gesamt-Readiness", overall),
+    statTile("Regulatorische Bewertung", regulatoryStats),
+    statTile("LCA Readiness", lcaStats),
+  ]);
+  container.appendChild(grid);
 
   if (relevant.length > 0) {
-    container.appendChild(el("h3", {}, ["Regularien nach Bereich"]));
+    container.appendChild(el("h3", { class: "dashboard-section-title" }, ["Regularien nach Bereich"]));
     const byRegulation = groupBy(relevant, (q) => q.regulation);
     const rows = [];
     byRegulation.forEach((qs, regulation) => {
       const stats = scoreStats(qs, appState.answers);
-      rows.push({
-        label: `${regulation} (${stats.answeredCount}/${stats.total})`,
-        pct: stats.pct || 0,
-      });
+      rows.push({ label: `${regulation} — ${REGULATIONS[regulation].fullName}`, pct: stats.pct, answeredCount: stats.answeredCount, total: stats.total });
     });
     const chartContainer = el("div", { class: "chart-container" });
     container.appendChild(chartContainer);
-    renderBarChart(chartContainer, rows, { ariaLabel: "Readiness nach Regularie" });
+    renderMeterList(chartContainer, rows);
 
-    container.appendChild(el("h3", {}, ["Regularien nach Handlungsfeld"]));
+    container.appendChild(el("h3", { class: "dashboard-section-title" }, ["Regularien nach Handlungsfeld"]));
     const byField = groupBy(relevant, (q) => `${q.regulation}: ${q.field}`);
     const fieldRows = [];
     byField.forEach((qs, label) => {
       const stats = scoreStats(qs, appState.answers);
-      fieldRows.push({ label: `${label} (${stats.answeredCount}/${stats.total})`, pct: stats.pct || 0 });
+      fieldRows.push({ label, pct: stats.pct, answeredCount: stats.answeredCount, total: stats.total });
     });
     const fieldChartContainer = el("div", { class: "chart-container" });
     container.appendChild(fieldChartContainer);
-    renderBarChart(fieldChartContainer, fieldRows, {
-      ariaLabel: "Readiness nach Handlungsfeld",
-      width: 620,
-      labelWidth: 340,
-    });
+    renderMeterList(fieldChartContainer, fieldRows);
   } else {
     container.appendChild(el("p", { class: "empty-hint" }, ["Keine Regularie ist für Ihr Profil als relevant markiert."]));
   }
 
-  container.appendChild(el("h3", {}, ["LCA Readiness nach Handlungsfeld"]));
+  container.appendChild(el("h3", { class: "dashboard-section-title" }, ["LCA Readiness nach Handlungsfeld"]));
   const lcaByField = groupBy(LCA_QUESTIONS, (q) => q.field);
   const lcaRows = [];
   lcaByField.forEach((qs, field) => {
     const stats = scoreStats(qs, appState.lcaAnswers);
-    lcaRows.push({ label: `${field} (${stats.answeredCount}/${stats.total})`, pct: stats.pct || 0 });
+    lcaRows.push({ label: field, pct: stats.pct, answeredCount: stats.answeredCount, total: stats.total });
   });
   const lcaChartContainer = el("div", { class: "chart-container" });
   container.appendChild(lcaChartContainer);
-  renderBarChart(lcaChartContainer, lcaRows, { ariaLabel: "LCA Readiness nach Handlungsfeld", width: 620, labelWidth: 340 });
+  renderMeterList(lcaChartContainer, lcaRows);
 
   const actions = el("div", { class: "dashboard-actions" }, [
     el("button", { class: "btn", onclick: () => window.print() }, ["Als PDF drucken / exportieren"]),
@@ -373,6 +406,8 @@ function renderContinueBar(container, nextStep, prevStep) {
   const bar = el("div", { class: "continue-bar" });
   if (prevStep) {
     bar.appendChild(el("button", { class: "btn btn-secondary", onclick: () => goToStep(prevStep) }, ["← Zurück"]));
+  } else {
+    bar.appendChild(el("span", {}));
   }
   if (nextStep) {
     bar.appendChild(el("button", { class: "btn", onclick: () => goToStep(nextStep) }, ["Weiter →"]));
@@ -383,28 +418,41 @@ function renderContinueBar(container, nextStep, prevStep) {
 function goToStep(step) {
   currentStep = step;
   renderShell();
+  window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
 }
 
 function renderShell() {
   const nav = document.getElementById("step-nav");
   nav.innerHTML = "";
-  STEPS.forEach((step) => {
-    const btn = el(
-      "button",
-      {
-        class: step === currentStep ? "step-btn is-active" : "step-btn",
-        onclick: () => goToStep(step),
-      },
-      [STEP_LABELS[step]]
-    );
-    nav.appendChild(btn);
+  const currentIndex = STEPS.indexOf(currentStep);
+
+  STEPS.forEach((step, i) => {
+    const state = i < currentIndex ? "is-complete" : i === currentIndex ? "is-active" : "";
+    const item = el("div", { class: `step-item ${state}`.trim() }, [
+      el(
+        "button",
+        { class: "step-btn", onclick: () => goToStep(step) },
+        [
+          el("span", { class: "step-dot" }, [i < currentIndex ? "✓" : String(i + 1)]),
+          el("span", { class: "step-label" }, [STEP_LABELS[step]]),
+        ]
+      ),
+    ]);
+    nav.appendChild(item);
+    if (i < STEPS.length - 1) {
+      nav.appendChild(el("div", { class: `step-connector ${i < currentIndex ? "is-complete" : ""}`.trim() }));
+    }
   });
 
   const content = document.getElementById("step-content");
-  if (currentStep === "profile") renderProfileStep(content);
-  else if (currentStep === "regulatory") renderRegulatoryStep(content);
-  else if (currentStep === "lca") renderLcaStep(content);
-  else if (currentStep === "dashboard") renderDashboardStep(content);
+  content.innerHTML = "";
+  const panel = el("div", { class: "panel" });
+  content.appendChild(panel);
+
+  if (currentStep === "profile") renderProfileStep(panel);
+  else if (currentStep === "regulatory") renderRegulatoryStep(panel);
+  else if (currentStep === "lca") renderLcaStep(panel);
+  else if (currentStep === "dashboard") renderDashboardStep(panel);
 }
 
 function wireHeaderActions() {

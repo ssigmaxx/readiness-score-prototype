@@ -68,15 +68,40 @@ implementation detail, and re-validating it wasn't in scope for this
 prototype. Regenerating `js/data.js` from an updated source workbook is a
 mechanical step if the questionnaire itself changes.
 
+## Design
+
+Built to be handed to client companies directly, not just to demo internally:
+
+- **Typeface:** [Public Sans](https://public-sans.digital.gov/) (SIL OFL 1.1),
+  self-hosted as woff2 under `fonts/` — chosen because it was built for exactly
+  this kind of official/regulatory reading context, and because it's a
+  deliberate alternative to the "generic AI-tool" look of ubiquitous SaaS
+  fonts. Self-hosted (not loaded from Google Fonts) so the "zero network
+  calls" guarantee holds for the page's styling too, not just its data.
+- **Color:** a fixed, non-decorative four-band status scale (good / warning /
+  serious / critical) drives every score — bars, chips, and the headline
+  figure all recolor by how ready that section actually is, instead of one
+  flat brand color regardless of score. Status colors are never reused for
+  anything else (navigation, buttons), so a color always means the same
+  thing everywhere on the page. An unanswered section is shown as neutral
+  gray with its own label, never as a false "0% / critical".
+- **Scoring UI:** a segmented 0–4 control per question (rather than a
+  dropdown) with the scale spelled out once at the top of each step, not
+  repeated 84 times — faster to fill in, easier to scan for gaps.
+- **Report output:** the print stylesheet renders the dashboard as a clean,
+  headerless report (company name + date, stat tiles, score breakdown) —
+  what a client would actually print or save as PDF to file internally.
+
 ## Structure
 
 ```
 index.html          shell + step navigation
 css/style.css
+fonts/               self-hosted Public Sans (woff2) + its OFL license
 js/data.js           question catalog, regulations, scale (generated from the source workbook)
 js/relevance.js       relevance engine (who sees which question)
 js/state.js           app state, localStorage autosave, JSON export/import
-js/charts.js          dependency-free inline SVG bar/donut charts
+js/charts.js          status-color logic + dependency-free meter/donut components
 js/app.js             UI wiring (profile → regulatory → LCA → dashboard)
 ```
 
