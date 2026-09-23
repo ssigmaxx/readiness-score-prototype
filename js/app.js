@@ -65,6 +65,36 @@ function scaleLegend() {
   return wrap;
 }
 
+// A slim progress bar + "answered / total" counter, kept live via the
+// returned update() function rather than re-rendering the whole (often long)
+// question list on every click.
+function renderProgressSummary(container, label) {
+  const fill = el("div", { class: "progress-summary-fill" });
+  const track = el("div", { class: "progress-summary-track" }, [fill]);
+  const count = el("span", { class: "progress-summary-count" });
+  container.appendChild(
+    el("div", { class: "progress-summary" }, [el("span", { class: "progress-summary-label" }, [label]), track, count])
+  );
+  return {
+    update(stats) {
+      const pct = stats.total === 0 ? 0 : (stats.answeredCount / stats.total) * 100;
+      fill.style.width = `${pct}%`;
+      count.textContent = `${stats.answeredCount} / ${stats.total} beantwortet`;
+    },
+  };
+}
+
+function sectionBadge() {
+  const badge = el("span", { class: "section-badge" });
+  return {
+    el: badge,
+    update(stats) {
+      badge.textContent = `${stats.answeredCount} / ${stats.total}`;
+      badge.classList.toggle("is-complete", stats.total > 0 && stats.answeredCount === stats.total);
+    },
+  };
+}
+
 // ---------- Step: Profile ----------
 
 function renderProfileStep(container) {
@@ -208,7 +238,7 @@ function regBlock(regulation, wanted, profileContainer, contentRows) {
     el("span", { class: "reg-fullname" }, [REGULATIONS[regulation].fullName]),
   ]);
   const body = el("div", { class: wanted ? "reg-block-body" : "reg-block-body is-disabled" }, contentRows);
-  return el("div", { class: "reg-block" }, [header, body]);
+  return el("div", { class: wanted ? "reg-block is-enabled" : "reg-block" }, [header, body]);
 }
 
 function selectRow(labelText, options, current, onChange) {
@@ -266,26 +296,48 @@ function renderRegulatoryStep(container) {
 
   container.appendChild(scaleLegend());
 
+  const overallSummary = renderProgressSummary(container, "Fortschritt");
+  const updateOverall = () => overallSummary.update(scoreStats(relevant, appState.answers));
+  updateOverall();
+
   const byRegulation = groupBy(relevant, (q) => q.regulation);
   byRegulation.forEach((questions, regulation) => {
-    container.appendChild(el("h3", { class: "regulation-title" }, [`${regulation}: ${REGULATIONS[regulation].fullName}`]));
+    const badge = sectionBadge();
+    const section = el("div", { class: "section-block" }, [
+      el("div", { class: "section-header" }, [
+        el("h3", { class: "section-title" }, [`${regulation}: ${REGULATIONS[regulation].fullName}`]),
+        badge.el,
+      ]),
+    ]);
+    const updateBadge = () => badge.update(scoreStats(questions, appState.answers));
+    updateBadge();
+
     const byField = groupBy(questions, (q) => q.field);
     byField.forEach((fieldQuestions, field) => {
-      container.appendChild(el("h4", { class: "field-title" }, [field]));
-      fieldQuestions.forEach((q) => container.appendChild(questionRow(q, appState.answers)));
+      section.appendChild(el("h4", { class: "field-title" }, [field]));
+      fieldQuestions.forEach((q) =>
+        section.appendChild(
+          questionRow(q, appState.answers, () => {
+            updateBadge();
+            updateOverall();
+          })
+        )
+      );
     });
+    container.appendChild(section);
   });
 
   renderContinueBar(container, "lca", "profile");
 }
 
-function questionRow(q, answerMap) {
+function questionRow(q, answerMap, onAnswer) {
   return el("div", { class: "question-row" }, [
     el("div", { class: "question-id" }, [q.id]),
     el("div", { class: "question-text" }, [q.text]),
     scalePicker(q.id, answerMap[q.id], (val) => {
       answerMap[q.id] = val;
       saveState();
+      if (onAnswer) onAnswer();
     }),
   ]);
 }
@@ -300,11 +352,31 @@ function renderLcaStep(container) {
     ])
   );
   container.appendChild(scaleLegend());
+
+  const overallSummary = renderProgressSummary(container, "Fortschritt");
+  const updateOverall = () => overallSummary.update(scoreStats(LCA_QUESTIONS, appState.lcaAnswers));
+  updateOverall();
+
   const byField = groupBy(LCA_QUESTIONS, (q) => q.field);
   byField.forEach((fieldQuestions, field) => {
-    container.appendChild(el("h4", { class: "field-title" }, [field]));
-    fieldQuestions.forEach((q) => container.appendChild(questionRow(q, appState.lcaAnswers)));
+    const badge = sectionBadge();
+    const section = el("div", { class: "section-block" }, [
+      el("div", { class: "section-header" }, [el("h3", { class: "section-title" }, [field]), badge.el]),
+    ]);
+    const updateBadge = () => badge.update(scoreStats(fieldQuestions, appState.lcaAnswers));
+    updateBadge();
+
+    fieldQuestions.forEach((q) =>
+      section.appendChild(
+        questionRow(q, appState.lcaAnswers, () => {
+          updateBadge();
+          updateOverall();
+        })
+      )
+    );
+    container.appendChild(section);
   });
+
   renderContinueBar(container, "dashboard", "regulatory");
 }
 
@@ -319,8 +391,7 @@ function scoreStats(questions, answerMap) {
   return { pct, answeredCount: answered.length, total };
 }
 
-function statTile(label, stats, opts) {
-  opts = opts || {};
+function statTile(label, stats) {
   const status = statusForPct(stats.pct);
   const tile = el("div", { class: "stat-tile" }, [
     el("div", { class: "stat-tile-label" }, [label]),
@@ -421,28 +492,31 @@ function goToStep(step) {
   window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
 }
 
+// Grid stepper: one "auto" column per step, one "1fr" connector column
+// between each pair, so the connecting line always sits at the row's
+// vertical center regardless of how long a step's label is.
 function renderShell() {
   const nav = document.getElementById("step-nav");
   nav.innerHTML = "";
   const currentIndex = STEPS.indexOf(currentStep);
+  const columns = [];
 
   STEPS.forEach((step, i) => {
-    const state = i < currentIndex ? "is-complete" : i === currentIndex ? "is-active" : "";
-    const item = el("div", { class: `step-item ${state}`.trim() }, [
-      el(
-        "button",
-        { class: "step-btn", onclick: () => goToStep(step) },
-        [
-          el("span", { class: "step-dot" }, [i < currentIndex ? "✓" : String(i + 1)]),
-          el("span", { class: "step-label" }, [STEP_LABELS[step]]),
-        ]
-      ),
+    columns.push("auto");
+    const state = i < currentIndex ? "is-complete" : i === currentIndex ? "is-active" : "is-upcoming";
+    const item = el("div", { class: `step-item ${state}` }, [
+      el("button", { class: "step-btn", onclick: () => goToStep(step) }, [
+        el("span", { class: "step-dot" }, [i < currentIndex ? "✓" : String(i + 1)]),
+        el("span", { class: "step-label" }, [STEP_LABELS[step]]),
+      ]),
     ]);
     nav.appendChild(item);
     if (i < STEPS.length - 1) {
+      columns.push("1fr");
       nav.appendChild(el("div", { class: `step-connector ${i < currentIndex ? "is-complete" : ""}`.trim() }));
     }
   });
+  nav.style.gridTemplateColumns = columns.join(" ");
 
   const content = document.getElementById("step-content");
   content.innerHTML = "";

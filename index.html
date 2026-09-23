@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+<div class="brand-bar"></div>
 <header class="app-header">
   <div class="app-header-inner">
     <div class="app-header-title">
@@ -15,9 +16,10 @@
       <p class="subtitle">Prüfen Sie Ihre Vorbereitung auf EUDR, CSDDD, PPWR, ESPR und Ihre LCA-Reife. Vollständig lokal, ohne Datenübertragung.</p>
     </div>
     <div class="app-header-actions">
-      <button id="export-btn" class="btn btn-secondary">Export (JSON)</button>
-      <button id="import-btn" class="btn btn-secondary">Import (JSON)</button>
+      <button id="export-btn" class="btn btn-ghost">Export (JSON)</button>
+      <button id="import-btn" class="btn btn-ghost">Import (JSON)</button>
       <input type="file" id="import-input" accept="application/json" hidden />
+      <span class="header-actions-divider"></span>
       <button id="reset-btn" class="btn btn-danger">Zurücksetzen</button>
     </div>
   </div>

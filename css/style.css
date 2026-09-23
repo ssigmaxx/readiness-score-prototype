@@ -118,6 +118,11 @@ body {
   font-size: 15px;
 }
 
+.brand-bar {
+  height: 4px;
+  background: var(--brand);
+}
+
 h1, h2, h3, h4 {
   font-family: inherit;
   font-weight: 600;
@@ -169,7 +174,8 @@ a {
 
 .app-header-actions {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
@@ -209,47 +215,65 @@ a {
   border-color: var(--text-muted);
 }
 
+/* Ghost: low-emphasis utility actions (header Export/Import) that shouldn't
+   visually compete with the primary flow or with the destructive Reset. */
+.btn-ghost {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  padding: 8px 12px;
+}
+
+.btn-ghost:hover {
+  background: var(--page-plane);
+  color: var(--text-primary);
+}
+
 .btn-danger {
-  background: var(--surface-1);
+  background: none;
   color: var(--status-critical);
-  border-color: var(--status-critical);
+  border: 1px solid transparent;
+  padding: 8px 12px;
 }
 
 .btn-danger:hover {
   background: var(--status-critical-wash);
 }
 
-/* ---------- Stepper ---------- */
+.header-actions-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-strong);
+  margin: 0 8px;
+}
+
+/* ---------- Stepper ----------
+   A CSS grid (not flex) so the connector row is always vertically centered on
+   the dots regardless of label length: JS sets grid-template-columns to
+   "auto 1fr auto 1fr ... auto" (one auto column per step, one 1fr connector
+   column between each pair), and align-items: center does the rest. */
 
 .step-nav {
   max-width: 980px;
   margin: 0 auto;
-  padding: 22px 24px 0;
-  display: flex;
-  align-items: flex-start;
-}
-
-.step-item {
-  flex: 1;
-  display: flex;
+  padding: 20px 24px 0;
+  display: grid;
   align-items: center;
-  min-width: 0;
-}
-
-.step-item:last-child {
-  flex: 0;
 }
 
 .step-connector {
-  flex: 1;
-  height: 1px;
-  background: var(--border-strong);
-  margin: 0 6px;
-  min-width: 16px;
+  height: 2px;
+  background: var(--gridline);
+  margin: 0 12px;
+  border-radius: 1px;
 }
 
 .step-connector.is-complete {
   background: var(--brand);
+}
+
+.step-item {
+  display: flex;
 }
 
 .step-btn {
@@ -258,16 +282,17 @@ a {
   gap: 8px;
   background: none;
   border: none;
+  border-radius: 999px;
   cursor: pointer;
-  padding: 4px 0;
+  padding: 5px 12px 5px 5px;
   font-family: inherit;
   color: var(--text-secondary);
   white-space: nowrap;
 }
 
 .step-dot {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   border: 1.5px solid var(--border-strong);
   display: flex;
@@ -281,8 +306,12 @@ a {
 }
 
 .step-label {
-  font-size: 0.82rem;
+  font-size: 0.83rem;
   font-weight: 600;
+}
+
+.step-item.is-active .step-btn {
+  background: var(--brand-wash);
 }
 
 .step-item.is-active .step-dot {
@@ -292,7 +321,7 @@ a {
 }
 
 .step-item.is-active .step-label {
-  color: var(--text-primary);
+  color: var(--brand-hover);
 }
 
 .step-item.is-complete .step-dot {
@@ -303,6 +332,10 @@ a {
 
 .step-item.is-complete .step-label {
   color: var(--text-secondary);
+}
+
+.step-item.is-upcoming .step-btn:hover {
+  background: var(--page-plane);
 }
 
 /* ---------- Content shell ---------- */
@@ -399,38 +432,44 @@ input[type="checkbox"] {
   cursor: pointer;
 }
 
-/* ---------- Regulation sections ---------- */
+/* ---------- Regulation sections ----------
+   A colored rule (not a bordered box) signals "included in your assessment":
+   brand blue when the regulation is toggled on, neutral gray when off. One
+   visual cue does double duty as state *and* as the "bit of colour" that
+   plain gray-bordered boxes were missing. */
 
 .regulation-sections {
   margin-top: 30px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 4px;
 }
 
 .reg-block {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
+  border-left: 3px solid var(--gridline);
+  padding: 14px 0 14px 20px;
+  transition: border-color 0.12s ease;
+}
+
+.reg-block.is-enabled {
+  border-left-color: var(--brand);
 }
 
 .reg-block-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background: var(--page-plane);
   flex-wrap: wrap;
   gap: 8px;
-  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
 }
 
 .toggle-chip {
   font-weight: 600;
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   cursor: pointer;
 }
 
@@ -440,7 +479,7 @@ input[type="checkbox"] {
 }
 
 .reg-block-body {
-  padding: 18px 20px;
+  padding-top: 12px;
 }
 
 .reg-block-body.is-disabled {
@@ -474,15 +513,85 @@ input[type="checkbox"] {
   font-weight: 700;
 }
 
-.regulation-title {
-  margin-top: 32px;
+.progress-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--brand-wash);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+}
+
+.progress-summary-label {
+  font-weight: 600;
+  font-size: 0.86rem;
+  color: var(--brand-hover);
+  white-space: nowrap;
+}
+
+.progress-summary-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(28, 92, 171, 0.15);
+  overflow: hidden;
+}
+
+.progress-summary-fill {
+  height: 100%;
+  background: var(--brand);
+  border-radius: 4px;
+  transition: width 0.2s ease;
+}
+
+.progress-summary-count {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--brand-hover);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.section-block {
+  border-left: 3px solid var(--brand);
+  padding-left: 20px;
+  margin-top: 28px;
+}
+
+.section-block:first-child {
+  margin-top: 0;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
   padding-bottom: 8px;
+  margin-bottom: 4px;
   border-bottom: 1px solid var(--border-strong);
+}
+
+.section-title {
   font-size: 1.05rem;
 }
 
-.regulation-title:first-child {
-  margin-top: 0;
+.section-badge {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--page-plane);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.section-badge.is-complete {
+  background: var(--brand-wash);
+  color: var(--brand-hover);
 }
 
 .field-title {
@@ -571,12 +680,6 @@ input[type="checkbox"] {
 
 .scale-picker-option input:checked + label:hover {
   background: var(--brand-hover);
-}
-
-.scale-picker-unanswered {
-  font-size: 0.74rem;
-  color: var(--text-muted);
-  margin-left: 8px;
 }
 
 .step-intro,
@@ -794,7 +897,9 @@ input[type="checkbox"] {
   .step-nav,
   .continue-bar,
   .dashboard-actions,
-  .intro-note {
+  .intro-note,
+  .progress-summary,
+  .brand-bar {
     display: none !important;
   }
 
