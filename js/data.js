@@ -1,5 +1,5 @@
 // Auto-generated from the source Readiness_Score.xlsm question catalog.
-// Do not hand-edit the question text/relevance blocks below — regenerate from source if the catalog changes.
+// Do not hand-edit the question text/relevance blocks below; regenerate from source if the catalog changes.
 
 const REGULATIONS = {
   "EUDR": {
@@ -52,7 +52,7 @@ const ESPR_ROLE_LABELS = ["Erzeuger", "Importeur", "Vertreiber", "Endvertreiber/
 // Canonical role key = REGULATION_ prefix + label with whitespace stripped.
 // (The original VBA tool's Select Case used role keys WITH spaces while the
 //  Relevanzlogik sheet stored them WITHOUT spaces, e.g. 'PPWR_Lieferant/Akteur in der Lieferkette'
-//  vs 'PPWR_Lieferant/AkteurinderLieferkette' — a silent mismatch that made that role's
+//  vs 'PPWR_Lieferant/AkteurinderLieferkette': a silent mismatch that made that role's
 //  questions never trigger for the user who picked it. Fixed here by using one consistent slug.)
 function roleKey(prefix, label) {
   return prefix + '_' + label.replace(/\s+/g, '');

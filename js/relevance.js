@@ -1,7 +1,7 @@
 // Relevance engine: decides which questions apply to a given company profile.
 // This is a single, generic evaluator instead of per-regulation special cases
 // (the original VBA hardcoded a separate branch for CSDDD directly against one
-// cell — here CSDDD is just another "matrix" condition with an empty role/size
+// cell: here CSDDD is just another "matrix" condition with an empty role/size
 // filter, so no code branch is regulation-specific).
 
 function inList(list, value) {

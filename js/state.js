@@ -1,7 +1,7 @@
 // Application state: company profile + answers, persisted to localStorage as a
 // per-viewer convenience (autosave of in-progress work) and exportable/importable
 // as a plain JSON file, which is also how it moves between machines. Nothing
-// here is ever sent anywhere — there is no network call in this app at all.
+// here is ever sent anywhere: there is no network call in this app at all.
 
 const STORAGE_KEY = "readiness-tool-state-v1";
 

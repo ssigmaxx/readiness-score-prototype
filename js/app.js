@@ -1,4 +1,4 @@
-// UI wiring. Plain DOM, no framework, no build step — open index.html and it runs.
+// UI wiring. Plain DOM, no framework, no build step. Open index.html and it runs.
 
 const STEPS = ["profile", "regulatory", "lca", "dashboard"];
 const STEP_LABELS = {
@@ -213,7 +213,7 @@ function regBlock(regulation, wanted, profileContainer, contentRows) {
 
 function selectRow(labelText, options, current, onChange) {
   const select = el("select", { onchange: (e) => onChange(e.target.value || null) });
-  select.appendChild(el("option", { value: "" }, ["— bitte wählen —"]));
+  select.appendChild(el("option", { value: "" }, ["Bitte wählen"]));
   options.forEach((o) => {
     const opt = el("option", { value: o }, [o]);
     if (current === o) opt.selected = true;
@@ -268,7 +268,7 @@ function renderRegulatoryStep(container) {
 
   const byRegulation = groupBy(relevant, (q) => q.regulation);
   byRegulation.forEach((questions, regulation) => {
-    container.appendChild(el("h3", { class: "regulation-title" }, [`${regulation} — ${REGULATIONS[regulation].fullName}`]));
+    container.appendChild(el("h3", { class: "regulation-title" }, [`${regulation}: ${REGULATIONS[regulation].fullName}`]));
     const byField = groupBy(questions, (q) => q.field);
     byField.forEach((fieldQuestions, field) => {
       container.appendChild(el("h4", { class: "field-title" }, [field]));
@@ -296,7 +296,7 @@ function renderLcaStep(container) {
   container.innerHTML = "";
   container.appendChild(
     el("p", { class: "step-intro" }, [
-      "Diese Bewertung ist unabhängig vom Unternehmensprofil — sie deckt die Reife Ihrer Ökobilanzierung (LCA) durchgehend ab.",
+      "Diese Bewertung ist unabhängig vom Unternehmensprofil. Sie deckt die Reife Ihrer Ökobilanzierung (LCA) durchgehend ab.",
     ])
   );
   container.appendChild(scaleLegend());
@@ -324,7 +324,7 @@ function statTile(label, stats, opts) {
   const status = statusForPct(stats.pct);
   const tile = el("div", { class: "stat-tile" }, [
     el("div", { class: "stat-tile-label" }, [label]),
-    el("div", { class: "stat-tile-value" }, [stats.pct === null ? "—" : `${Math.round(stats.pct)}%`]),
+    el("div", { class: "stat-tile-value" }, [stats.pct === null ? "–" : `${Math.round(stats.pct)}%`]),
   ]);
   const sub = el("div", { class: "stat-tile-sub" });
   sub.innerHTML = `${statusChipHTML(status)}<br>${stats.answeredCount} von ${stats.total} Fragen beantwortet`;
@@ -344,7 +344,7 @@ function renderDashboardStep(container) {
   const lcaStats = scoreStats(LCA_QUESTIONS, appState.lcaAnswers);
 
   const reportMeta = el("div", { class: "report-meta" }, [
-    `${appState.companyName ? appState.companyName + " — " : ""}Readiness-Auswertung vom ${new Date().toLocaleDateString("de-DE")}`,
+    `${appState.companyName ? appState.companyName + ": " : ""}Readiness-Auswertung vom ${new Date().toLocaleDateString("de-DE")}`,
   ]);
   container.appendChild(reportMeta);
 
@@ -361,7 +361,7 @@ function renderDashboardStep(container) {
     const rows = [];
     byRegulation.forEach((qs, regulation) => {
       const stats = scoreStats(qs, appState.answers);
-      rows.push({ label: `${regulation} — ${REGULATIONS[regulation].fullName}`, pct: stats.pct, answeredCount: stats.answeredCount, total: stats.total });
+      rows.push({ label: `${regulation}: ${REGULATIONS[regulation].fullName}`, pct: stats.pct, answeredCount: stats.answeredCount, total: stats.total });
     });
     const chartContainer = el("div", { class: "chart-container" });
     container.appendChild(chartContainer);

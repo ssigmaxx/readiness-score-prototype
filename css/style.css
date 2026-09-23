@@ -1,4 +1,4 @@
-/* Public Sans (SIL OFL 1.1) — self-hosted, no runtime network request.
+/* Public Sans (SIL OFL 1.1): self-hosted, no runtime network request.
    License: /fonts/LICENSE.md */
 @font-face {
   font-family: "Public Sans";
@@ -79,12 +79,12 @@
   --border: rgba(11, 11, 11, 0.1);
   --border-strong: rgba(11, 11, 11, 0.16);
 
-  /* Brand / interactive — categorical slot 1 (blue), reserved for UI, never reused for status */
+  /* Brand / interactive: categorical slot 1 (blue), reserved for UI, never reused for status */
   --brand: #1c5cab;
   --brand-hover: #184f95;
   --brand-wash: #eaf1fa;
 
-  /* Status palette — fixed, never themed, reserved for readiness scoring only */
+  /* Status palette: fixed, never themed, reserved for readiness scoring only */
   --status-good: #0ca30c;
   --status-good-wash: #e8f6e4;
   --status-warning: #c98500;

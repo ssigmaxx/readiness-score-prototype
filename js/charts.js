@@ -3,7 +3,7 @@
 // app) has to keep working when opened with no internet connection at all.
 //
 // Status colors follow a fixed, non-themed four-band scale (good / warning /
-// serious / critical) and are never reused as decoration — every colored meter
+// serious / critical) and are never reused as decoration: every colored meter
 // carries a text status label beside it, so meaning never rests on hue alone.
 
 const STATUS_BANDS = [
@@ -108,7 +108,7 @@ function renderDonut(container, value, opts) {
   svg.appendChild(fill);
 
   const text = svgEl("text", { x: size / 2, y: size / 2 + 8, class: "donut-label" });
-  text.textContent = value === null ? "—" : `${Math.round(pct)}%`;
+  text.textContent = value === null ? "–" : `${Math.round(pct)}%`;
   svg.appendChild(text);
 
   container.innerHTML = "";
