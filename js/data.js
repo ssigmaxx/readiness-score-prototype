@@ -1,5 +1,5 @@
-// Auto-generated from the source Readiness_Score.xlsm question catalog.
-// Do not hand-edit the question text/relevance blocks below; regenerate from source if the catalog changes.
+// The question catalog, first generated from the source Readiness_Score.xlsm workbook.
+// This file is safe to edit by hand: see docs/HOW-TO-CHANGE-THINGS.md for simple step by step recipes.
 
 const REGULATIONS = {
   "EUDR": {
