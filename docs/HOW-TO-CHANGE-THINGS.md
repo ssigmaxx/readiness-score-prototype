@@ -540,8 +540,9 @@ programming knowledge:
   answered questions, shown as a percentage).
 - Changing the **layout** of the pages.
 
-For a programmer, the file [TECHNICAL-NOTES.md](TECHNICAL-NOTES.md) explains
-how the tool is built and why.
+To understand what each part of the code does, read
+[HOW-THE-CODE-WORKS.md](HOW-THE-CODE-WORKS.md). For a programmer, the file
+[TECHNICAL-NOTES.md](TECHNICAL-NOTES.md) explains why the tool was built this way.
 
 ---
 

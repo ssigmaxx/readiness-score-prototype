@@ -12,6 +12,10 @@ step by step guide:
 
 **[How to change things (step by step guide)](docs/HOW-TO-CHANGE-THINGS.md)**
 
+If you want to understand what each part of the code does, read:
+
+**[How the code works](docs/HOW-THE-CODE-WORKS.md)**
+
 ---
 
 ## 1. How to open the tool
@@ -74,6 +78,7 @@ ones you might want to change one day.
 | `js/state.js` | Saves, exports and imports the answers. | No |
 | `fonts/` | The font files (Public Sans). | No |
 | `docs/HOW-TO-CHANGE-THINGS.md` | The step by step guide for making changes. | Read it |
+| `docs/HOW-THE-CODE-WORKS.md` | Explains what every part of the code does, in simple English. | Read it when you are curious |
 | `docs/TECHNICAL-NOTES.md` | Notes for programmers (why things were built this way). | No |
 
 ## 5. The three golden rules for making changes
